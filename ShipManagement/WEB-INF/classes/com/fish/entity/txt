@@ -1,0 +1,91 @@
+#
+#!/bin/bash
+#
+# chkconfig: - 91 35
+# description: Starts and stops tomcat
+
+CATALINA_HOME=/opt/tomcat8
+JAVA_HOME=/usr/java/jdk1.7.0_55
+JAVA_OPTS="-server -Xms512m -Xmx1024m" 
+CATALINA_BASE=$CATALINA_HOME
+CATALINA_OPTS="-Djava.library.path=$CATALINA_HOME/bin"
+CLASSPATH=/
+$JAVA_HOME/lib/tools.jar:/
+$CATALINA_HOME/bin/commons-daemon.jar:/
+$CATALINA_HOME/bin/bootstrap.jar
+
+RETVAL=0
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+# Source networking configuration.
+. /etc/sysconfig/network
+
+# Check that networking is up.
+[ ${NETWORKING} = "no" ] && exit 0
+
+
+# Start  daemons functions.
+start() {
+#
+# Start Tomcat
+#
+if [ -e $PID_FILE ];then
+   echo "$PID_FILE already running...."
+   exit 1
+fi
+   echo -n $"Starting $PID_FILE: "
+   nohup $JAVA_HOME/bin/java /
+    -Dcatalina.home=$CATALINA_HOME /
+    -Dcatalina.base=$CATALINA_BASE /
+    -Djava.io.tmpdir=$TMP_DIR /
+    $CATALINA_OPTS /
+    -cp $CLASSPATH /
+    $JAVA_OPTS /
+    org.apache.catalina.startup.Bootstrap  start >$CATALINA_HOME/logs/catalina.out &
+   RETVAL=$?
+   echo
+   [ $RETVAL = 0 ] && touch $PID_FILE
+   return $RETVAL
+}
+
+# Stop daemons functions.
+stop() {
+    #
+    # Stop Tomcat
+    #
+    echo -n $"Stopping $PID_FILE: "
+    nohup $JAVA_HOME/bin/java /
+    -Dcatalina.home=$CATALINA_HOME /
+    -Dcatalina.base=$CATALINA_BASE /
+    -Djava.io.tmpdir=$TMP_DIR /
+    $CATALINA_OPTS /
+    -cp $CLASSPATH /
+    org.apache.catalina.startup.Bootstrap  stop >$CATALINA_HOME/logs/catalina.out &
+
+    RETVAL=$?
+    echo
+    [ $RETVAL = 0 ] && rm -f $PID_FILE
+    return $RETVAL
+}
+
+
+# See how we were called.
+case "$1" in
+start)
+        start
+        ;;
+
+stop)
+        stop
+        ;;
+restart)
+        stop
+        start
+        ;;
+*)
+        echo $"Usage: $prog {start|stop|restart}"
+        exit 1
+esac
+
+exit $RETVAL
